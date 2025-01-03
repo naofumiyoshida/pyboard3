@@ -4,7 +4,9 @@
 import cgi  
 import cgitb  
 import sqlite3  
-  
+from sqlite3 import Error
+import html
+
 import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -64,8 +66,8 @@ con = sqlite3.connect("board.db")
 try:  
   # Database Creation
   con.executescript("""create table boardtbl(regdate timestamp,name varchar(10),title varchar(30),comment varchar(100),url text);""")  
-except:  
-  print  
+except Error as e:  
+    print(e)
 finally:  
   # If there is input, insert data to database
   form = cgi.FieldStorage()  
@@ -78,10 +80,11 @@ finally:
     url = form["url"].value
     cur = con.cursor()
     try:  
-      cur.execute("insert into boardtbl values(datetime('now','localtime'),?,?,?,?)",(cgi.escape(name),cgi.escape(title),cgi.escape(comment),cgi.escape(url)))  
+      cur.execute("insert into boardtbl values(datetime('now','localtime'),?,?,?,?)",(html.escape(name),html.escape(title),html.escape(comment),html.escape(url)))  
       con.commit()  
-    except:  
-      con.rollback()  
+    except Error as e:
+      print(e)
+      #con.rollback()  
     finally:  
       cur.close()  
   
@@ -100,8 +103,10 @@ finally:
       print('URL: <a href=', each['url'], '>', each['url'], '</a>')
       print('<dt><br>')
       print('<dd>', each['comment'], '</dd>')
+      print("</dl>")
+  except Error as e:
+        print(e)
 
-    print("</dl>")
   finally:  
     cur.close()  
     con.close()  
